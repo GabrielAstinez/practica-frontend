@@ -1,27 +1,28 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-@app.post("/evaluar")
-def evaluar(payload: dict):
-    expression = payload.get("expression")
-    data = payload.get("data")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    if expression is None or data is None:
-        return {
-            "success": False,
-            "error": "Falta expression o data"
-        }
+class EvaluateRequest(BaseModel):
+    language: str
+    expression: str
+    data: dict
 
-    try:
-        result = eval(expression, {}, data)
-        return {
-            "success": True,
-            "result": result
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
-    
+@app.post("/api/evaluate")
+def evaluate(req: EvaluateRequest):
+    return {
+        "success": True,
+        "result": "Este es el resultado final",
+        "language": req.language,
+        "expression": req.expression,
+        "data": req.data
+    }
