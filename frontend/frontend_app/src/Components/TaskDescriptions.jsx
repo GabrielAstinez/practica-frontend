@@ -19,7 +19,7 @@ function TaskDescriptions() {
         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
       </div>
       <div>
-        <h4>Challenge 5</h4>
+        <h4>Challenge 4</h4>
         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
       </div>
     </div>
