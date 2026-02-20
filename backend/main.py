@@ -19,10 +19,23 @@ class EvaluateRequest(BaseModel):
 
 @app.post("/api/evaluate")
 def evaluate(req: EvaluateRequest):
+
+    variables = req.data
+
+    result = eval(req.expression, {}, variables)
+
     return {
         "success": True,
-        "result": "Este es el resultado final",
+        "": result,
         "language": req.language,
         "expression": req.expression,
         "data": req.data
+    }
+    
+@app.post("/api/validate")
+def validate(req: EvaluateRequest):
+    return {
+        "success": True,
+        "message": "Expresión válida",
+        "expression": req.expression
     }
