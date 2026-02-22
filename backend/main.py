@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
+# IMPORTAMOS LAS FUNCIONES
+from shared.helper import evaluate_expression, validate_expression
+
 app = FastAPI()
 
 app.add_middleware(
@@ -17,25 +20,12 @@ class EvaluateRequest(BaseModel):
     expression: str
     data: dict
 
+
 @app.post("/api/evaluate")
 def evaluate(req: EvaluateRequest):
+    return evaluate_expression(req.expression, req.data)
 
-    variables = req.data
 
-    result = eval(req.expression, {}, variables)
-
-    return {
-        "success": True,
-        "": result,
-        "language": req.language,
-        "expression": req.expression,
-        "data": req.data
-    }
-    
 @app.post("/api/validate")
 def validate(req: EvaluateRequest):
-    return {
-        "success": True,
-        "message": "Expresión válida",
-        "expression": req.expression
-    }
+    return validate_expression(req.expression, req.data)
