@@ -1,26 +1,27 @@
-# Playground de Evaluación de Expresiones Frontend
+# Evaluador de Expresiones
 
-Frontend del proyecto de práctica profesional.
-Aplicación web desarrollada en React para la evaluación de expresiones
-(CEL / Starlark).
+Aplicación web con frontend y backend.
 
-## Estado actual
+## Requisitos
 
-- UI base implementada
-- Inputs de JSON y expresiones
-- Selector de lenguaje y modo
-- Sin backend (en desarrollo)
+- Python 3.13.12
+- Node.js 24.13.0
 
-## Tecnologías
+## Backend
 
-- React
-- JavaScript / TypeScript
-- CSS
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload
 
-## Cómo ejecutar el proyecto
+## Frontend
 
-```bash
 cd frontend
 npm install
-npm start
-```
+npm run dev
+
+## Uso
+
+1. Abrir la web
+2. Ingresar JSON y expresión
+3. Validar o evaluar
+4. Ver resultado
