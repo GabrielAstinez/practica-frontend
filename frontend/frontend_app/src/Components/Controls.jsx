@@ -1,4 +1,8 @@
+import { useState } from "react";
+
 function Controls({ jsonText, expression, setResult }) {
+  const [celEngine, setCelEngine] = useState("common");
+
   const handleValidate = async () => {
     try {
       const parsedData = JSON.parse(jsonText);
@@ -12,6 +16,7 @@ function Controls({ jsonText, expression, setResult }) {
           language: "CEL",
           expression: expression,
           data: parsedData.data,
+          engine: celEngine,
         }),
       });
 
@@ -35,6 +40,7 @@ function Controls({ jsonText, expression, setResult }) {
           language: "CEL",
           expression: expression,
           data: parsedData.data,
+          engine: celEngine,
         }),
       });
 
@@ -51,6 +57,14 @@ function Controls({ jsonText, expression, setResult }) {
         <option>CEL</option>
         <option>STARLARK</option>
       </select>
+
+      <div className="control-group">
+        <span>CEL Engine: </span>
+        <select value={celEngine} onChange={(e) => setCelEngine(e.target.value)}>
+          <option value="common">CEL Common (Rust) ⚡</option>
+          <option value="pycel">PyCEL (Python) 🐍</option>
+        </select>
+      </div>
 
       <div className="control-group">
         <span>Mode: </span>

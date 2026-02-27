@@ -1,0 +1,172 @@
+{
+  "challenges": [
+    {
+      "id": 1,
+      "title": "Filtrar un valor desde JSON",
+      "description": "Acceder a un valor específico dentro de un objeto JSON",
+      "difficulty": "easy",
+      "json_input": {
+        "data": {
+          "user": {
+            "name": "Juan",
+            "age": 30,
+            "email": "juan@example.com"
+          }
+        }
+      },
+      "cel_expression": "user.name",
+      "expected_result": "Juan"
+    },
+    {
+      "id": 2,
+      "title": "Comparar dos valores numéricos",
+      "description": "Comparar si un valor es mayor que otro y obtener boolean",
+      "difficulty": "easy",
+      "json_input": {
+        "data": {
+          "price": 100,
+          "discount_price": 80
+        }
+      },
+      "cel_expression": "price > discount_price",
+      "expected_result": true
+    },
+    {
+      "id": 3,
+      "title": "Comparar strings",
+      "description": "Evaluar si dos strings son iguales",
+      "difficulty": "easy",
+      "json_input": {
+        "data": {
+          "status": "active",
+          "expected_status": "inactive"
+        }
+      },
+      "cel_expression": "status == expected_status",
+      "expected_result": false
+    },
+    {
+      "id": 4,
+      "title": "Comparar fechas",
+      "description": "Verificar si una fecha es mayor que otra",
+      "difficulty": "medium",
+      "json_input": {
+        "data": {
+          "subscription_end": "2026-12-31T23:59:59Z",
+          "current_date": "2026-02-26T00:00:00Z"
+        }
+      },
+      "cel_expression": "timestamp(subscription_end) > timestamp(current_date)",
+      "expected_result": true
+    },
+    {
+      "id": 5,
+      "title": "Comparar números decimales",
+      "description": "Comparar si un número decimal es mayor que otro",
+      "difficulty": "easy",
+      "json_input": {
+        "data": {
+          "temperature": 25.5,
+          "threshold": 20.0
+        }
+      },
+      "cel_expression": "temperature > threshold",
+      "expected_result": true
+    },
+    {
+      "id": 6,
+      "title": "Validar patrón regex",
+      "description": "Verificar si un string cumple un patrón regex (email)",
+      "difficulty": "medium",
+      "json_input": {
+        "data": {
+          "email": "usuario@example.com"
+        }
+      },
+      "cel_expression": "email.matches(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$')",
+      "expected_result": true
+    },
+    {
+      "id": 7,
+      "title": "Verificar tipo de dato",
+      "description": "Comprobar que una variable es de tipo entero",
+      "difficulty": "easy",
+      "json_input": {
+        "data": {
+          "value": 42
+        }
+      },
+      "cel_expression": "type(value) == int",
+      "expected_result": true
+    },
+    {
+      "id": 8,
+      "title": "Redondear a 2 decimales",
+      "description": "Redondear un número decimal a 2 decimales",
+      "difficulty": "medium",
+      "json_input": {
+        "data": {
+          "price": 19.99567
+        }
+      },
+      "cel_expression": "double(int(price * 100)) / 100.0",
+      "expected_result": 19.99
+    },
+    {
+      "id": 9,
+      "title": "Filtrar lista",
+      "description": "Filtrar elementos de una lista que cumplan una condición",
+      "difficulty": "medium",
+      "json_input": {
+        "data": {
+          "numbers": [1, 2, 3, 4, 5]
+        }
+      },
+      "cel_expression": "numbers.filter(n, n > 3)",
+      "expected_result": [4, 5]
+    },
+    {
+      "id": 10,
+      "title": "Operador ternario",
+      "description": "Usar operador ternario para clasificar un puntaje",
+      "difficulty": "medium",
+      "json_input": {
+        "data": {
+          "score": 85
+        }
+      },
+      "cel_expression": "score >= 90 ? 'Excelente' : score >= 70 ? 'Bueno' : 'Regular'",
+      "expected_result": "Bueno"
+    },
+    {
+      "id": 11,
+      "title": "Múltiples condiciones",
+      "description": "Combinar múltiples condiciones con operadores lógicos",
+      "difficulty": "medium",
+      "json_input": {
+        "data": {
+          "user": {
+            "name": "Ana",
+            "role": "admin",
+            "active": true
+          }
+        }
+      },
+      "cel_expression": "user.role == 'admin' && user.active",
+      "expected_result": true
+    },
+    {
+      "id": 12,
+      "title": "Calcular promedio",
+      "description": "Calcular el promedio de valores en una lista",
+      "difficulty": "hard",
+      "json_input": {
+        "data": {
+          "grades": [85, 90, 78, 92, 88]
+        }
+      },
+      "cel_expression": "size(grades) > 0 ? double(grades.sum()) / double(size(grades)) : 0.0",
+      "expected_result": 86.6
+    }
+  ]
+}
