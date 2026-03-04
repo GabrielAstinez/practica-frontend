@@ -1,80 +1,9 @@
-import { useState } from "react";
-
-function Controls({ jsonText, expression, setResult }) {
-  const [celEngine, setCelEngine] = useState("common");
-
-  const handleValidate = async () => {
-    try {
-      const parsedData = JSON.parse(jsonText);
-
-      const response = await fetch("http://localhost:8000/api/validate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          language: "CEL",
-          expression: expression,
-          data: parsedData.data,
-          engine: celEngine,
-        }),
-      });
-
-      const result = await response.json();
-      setResult(JSON.stringify(result));
-    } catch (error) {
-      setResult("Error al validar");
-    }
-  };
-
-  const handleEvaluate = async () => {
-    try {
-      const parsedData = JSON.parse(jsonText);
-
-      const response = await fetch("http://localhost:8000/api/evaluate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          language: "CEL",
-          expression: expression,
-          data: parsedData.data,
-          engine: celEngine,
-        }),
-      });
-
-      const result = await response.json();
-      setResult(JSON.stringify(result));
-    } catch (error) {
-      setResult("Error al evaluar");
-    }
-  };
-
+function Controls({ onSubmit, disabled }) {
   return (
     <div className="controls">
-      <select>
-        <option>CEL</option>
-        <option>STARLARK</option>
-      </select>
-
-      <div className="control-group">
-        <span>CEL Engine: </span>
-        <select value={celEngine} onChange={(e) => setCelEngine(e.target.value)}>
-          <option value="common">CEL Common (Rust) ⚡</option>
-          <option value="pycel">PyCEL (Python) 🐍</option>
-        </select>
-      </div>
-
-      <div className="control-group">
-        <span>Mode: </span>
-        <select>
-          <option>API Backend</option>
-        </select>
-      </div>
-
-      <button onClick={handleValidate}>Validate</button>
-      <button onClick={handleEvaluate}>Evaluate</button>
+      <button onClick={onSubmit} disabled={disabled}>
+        Submit
+      </button>
     </div>
   );
 }
