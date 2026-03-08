@@ -28,7 +28,7 @@ def load_challenges():
     with open(CHALLENGES_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
-# MODELOS
+#MODELOS
 
 class SubmitRequest(BaseModel):
     expression: str

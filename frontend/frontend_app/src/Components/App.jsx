@@ -2,26 +2,46 @@ import { useState } from "react";
 import Playground from "./Playground";
 import Challenges from "./Challenges";
 import TaskDescriptions from "./TaskDescriptions";
+import ModalLogin from "./ModalLogin";
 
 function App() {
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [completedChallenges, setCompletedChallenges] = useState([]);
 
+  // 🔹 ahora inicia abierto
+  const [isLoginOpen, setIsLoginOpen] = useState(true);
+
   return (
-    <div className="layout">
-      <TaskDescriptions selectedChallenge={selectedChallenge} />
+    <>
+      <button
+        style={{
+          position: "fixed",
+          top: "20px",
+          right: "20px",
+          zIndex: 1000,
+        }}
+        onClick={() => setIsLoginOpen(true)}
+      >
+        Login
+      </button>
 
-      <Playground
-        selectedChallenge={selectedChallenge}
-        completedChallenges={completedChallenges}
-        setCompletedChallenges={setCompletedChallenges}
-      />
+      <ModalLogin isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
 
-      <Challenges
-        onSelectChallenge={setSelectedChallenge}
-        completedChallenges={completedChallenges}
-      />
-    </div>
+      <div className="layout">
+        <TaskDescriptions selectedChallenge={selectedChallenge} />
+
+        <Playground
+          selectedChallenge={selectedChallenge}
+          completedChallenges={completedChallenges}
+          setCompletedChallenges={setCompletedChallenges}
+        />
+
+        <Challenges
+          onSelectChallenge={setSelectedChallenge}
+          completedChallenges={completedChallenges}
+        />
+      </div>
+    </>
   );
 }
 

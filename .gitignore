@@ -7,3 +7,5 @@ build/
 
 # OS
 .DS_Store
+#Credenciales
+password.txt

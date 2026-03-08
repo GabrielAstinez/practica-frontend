@@ -12,6 +12,7 @@ function Playground({
   const [jsonText, setJsonText] = useState("");
   const [expression, setExpression] = useState("");
   const [result, setResult] = useState("");
+  const [engine, setEngine] = useState("common");
 
   useEffect(() => {
     if (selectedChallenge) {
@@ -31,21 +32,32 @@ function Playground({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           expression: expression,
-          engine: "common",
+          engine: engine,
         }),
       },
     );
 
     const data = await response.json();
 
-    if (data.passed) {
-      setResult("Correct ✅");
+    if (!data.success) {
+      setResult(`Error: ${data.message}`);
+      return;
+    }
 
-      if (!completedChallenges.includes(selectedChallenge.id)) {
-        setCompletedChallenges([...completedChallenges, selectedChallenge.id]);
-      }
-    } else {
-      setResult("Incorrect ❌");
+    const resultText = `
+Engine: ${engine}
+
+Result: ${JSON.stringify(data.obtained)}
+
+Expected: ${JSON.stringify(data.expected)}
+
+Status: ${data.passed ? "Correct ✅" : "Incorrect ❌"}
+`;
+
+    setResult(resultText);
+
+    if (data.passed && !completedChallenges.includes(selectedChallenge.id)) {
+      setCompletedChallenges([...completedChallenges, selectedChallenge.id]);
     }
   };
 
@@ -60,6 +72,16 @@ function Playground({
         value={expression}
         onChange={(e) => setExpression(e.target.value)}
       />
+
+      <div className="panel">
+        <h4>Engine</h4>
+        <select value={engine} onChange={(e) => setEngine(e.target.value)}>
+          <option value="common">CEL (common)</option>
+          <option value="pycel">CEL (pycel)</option>
+          <option value="wasm">WebAssembly</option>
+          <option value="starlark">Starlark</option>
+        </select>
+      </div>
 
       <Controls onSubmit={handleSubmit} disabled={!selectedChallenge} />
 
