@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 import json
 from pathlib import Path
+import requests
+
 
 from shared.helper import (
     evaluate_expression,
@@ -28,6 +30,7 @@ def load_challenges():
     with open(CHALLENGES_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
+
 #MODELOS
 
 class SubmitRequest(BaseModel):
@@ -40,6 +43,10 @@ class EvaluateRequest(BaseModel):
     expression: str
     data: dict
     engine: Optional[str] = "common"
+
+
+class LoginRequest(BaseModel):
+    captcha: str
 
 
 #ENDPOINTS
@@ -112,3 +119,37 @@ def validate(req: EvaluateRequest):
         req.language,
         req.engine
     )
+
+
+#LOGIN
+
+PASSWORD_PATH = Path(__file__).parent / "password.txt"
+
+
+def get_secret():
+    with open(PASSWORD_PATH, "r") as f:
+        for line in f:
+            if line.startswith("CLOUDFLARE_SECRET="):
+                return line.strip().split("=")[1]
+
+
+TURNSTILE_SECRET = get_secret()
+
+
+@app.post("/api/login")
+def login(req: LoginRequest):
+
+    response = requests.post(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        data={
+            "secret": TURNSTILE_SECRET,
+            "response": req.captcha
+        }
+    )
+
+    result = response.json()
+
+    if not result.get("success"):
+        return {"success": False, "message": "Captcha inválido"}
+
+    return {"success": True}
