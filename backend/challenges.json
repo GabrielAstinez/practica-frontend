@@ -15,6 +15,7 @@
         }
       },
       "cel_expression": "user.name",
+      "starlark_expression": "user[\"name\"]",
       "expected_result": "Juan"
     },
     {
@@ -29,6 +30,7 @@
         }
       },
       "cel_expression": "price > discount_price",
+      "starlark_expression": "price > discount_price",
       "expected_result": true
     },
     {
@@ -43,6 +45,7 @@
         }
       },
       "cel_expression": "status == expected_status",
+      "starlark_expression": "status == expected_status",
       "expected_result": false
     },
     {
@@ -57,6 +60,7 @@
         }
       },
       "cel_expression": "timestamp(subscription_end) > timestamp(current_date)",
+      "starlark_expression": "timestamp(subscription_end) > timestamp(current_date)",
       "expected_result": true
     },
     {
@@ -71,6 +75,7 @@
         }
       },
       "cel_expression": "temperature > threshold",
+      "starlark_expression": "temperature > threshold",
       "expected_result": true
     },
     {
@@ -84,6 +89,7 @@
         }
       },
       "cel_expression": "email.matches(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$')",
+      "starlark_expression": "matches(email, r\"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$\")",
       "expected_result": true
     },
     {
@@ -97,6 +103,7 @@
         }
       },
       "cel_expression": "type(value) == int",
+      "starlark_expression": "type(value) == \"int\"",
       "expected_result": true
     },
     {
@@ -110,6 +117,7 @@
         }
       },
       "cel_expression": "double(int(price * 100)) / 100.0",
+      "starlark_expression": "float(int(price * 100)) / 100.0",
       "expected_result": 19.99
     },
     {
@@ -123,6 +131,7 @@
         }
       },
       "cel_expression": "numbers.filter(n, n > 3)",
+      "starlark_expression": "[n for n in numbers if n > 3]",
       "expected_result": [4, 5]
     },
     {
@@ -136,6 +145,7 @@
         }
       },
       "cel_expression": "score >= 90 ? 'Excelente' : score >= 70 ? 'Bueno' : 'Regular'",
+      "starlark_expression": "\"Excelente\" if score >= 90 else (\"Bueno\" if score >= 70 else \"Regular\")",
       "expected_result": "Bueno"
     },
     {
@@ -153,6 +163,7 @@
         }
       },
       "cel_expression": "user.role == 'admin' && user.active",
+      "starlark_expression": "user[\"role\"] == \"admin\" and user[\"active\"]",
       "expected_result": true
     },
     {
@@ -166,6 +177,7 @@
         }
       },
       "cel_expression": "size(grades) > 0 ? double(grades.sum()) / double(size(grades)) : 0.0",
+      "starlark_expression": "float(sum(grades)) / float(len(grades)) if len(grades) > 0 else 0.0",
       "expected_result": 86.6
     }
   ]

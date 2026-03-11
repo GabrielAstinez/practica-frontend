@@ -1,6 +1,7 @@
 import json
 from shared.pycel_engine import pycel_engine
 from shared.cel_common_engine import cel_common_engine
+from shared.starlark_engine import starlark_engine
 
 
 def _normalize(value):
@@ -47,6 +48,9 @@ def evaluate_expression(expression: str, variables: dict, language: str = "CEL",
                 "expression": expression
             }
 
+    elif language.upper() == "STARLARK":
+        result = starlark_engine.evaluate(expression, variables)
+
     else:
         return {
             "success": False,
@@ -92,6 +96,9 @@ def validate_expression(expression: str, variables: dict, language: str = "CEL",
                 "message": f"Motor CEL no soportado: {engine}",
                 "expression": expression
             }
+
+    elif language.upper() == "STARLARK":
+        return starlark_engine.validate(expression, variables)
 
     else:
         return {

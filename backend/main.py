@@ -79,7 +79,7 @@ def submit_challenge(challenge_id: int, req: SubmitRequest):
     result = evaluate_expression(
         req.expression,
         challenge["json_input"],
-        "CEL",
+        "Starlark" if req.engine == "starlark" else "CEL",
         req.engine
     )
 

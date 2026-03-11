@@ -71,6 +71,7 @@ Status: ${data.passed ? "Correct ✅" : "Incorrect ❌"}
       <ExpressionInput
         value={expression}
         onChange={(e) => setExpression(e.target.value)}
+        engine={engine}
       />
 
       <div className="panel">
