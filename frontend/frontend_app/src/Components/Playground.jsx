@@ -11,14 +11,14 @@ function Playground({
 }) {
   const [jsonText, setJsonText] = useState("");
   const [expression, setExpression] = useState("");
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState(null);
   const [engine, setEngine] = useState("common");
 
   useEffect(() => {
     if (selectedChallenge) {
       setJsonText(JSON.stringify(selectedChallenge.json_input, null, 2));
       setExpression("");
-      setResult("");
+      setResult(null);
     }
   }, [selectedChallenge]);
 
@@ -29,7 +29,9 @@ function Playground({
       `http://localhost:8000/api/challenges/${selectedChallenge.id}/submit`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           expression: expression,
           engine: engine,
@@ -39,22 +41,8 @@ function Playground({
 
     const data = await response.json();
 
-    if (!data.success) {
-      setResult(`Error: ${data.message}`);
-      return;
-    }
-
-    const resultText = `
-Engine: ${engine}
-
-Result: ${JSON.stringify(data.obtained)}
-
-Expected: ${JSON.stringify(data.expected)}
-
-Status: ${data.passed ? "Correct ✅" : "Incorrect ❌"}
-`;
-
-    setResult(resultText);
+    // ahora simplemente guardamos el resultado que devuelve el backend
+    setResult(data);
 
     if (data.passed && !completedChallenges.includes(selectedChallenge.id)) {
       setCompletedChallenges([...completedChallenges, selectedChallenge.id]);
