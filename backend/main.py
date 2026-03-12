@@ -5,13 +5,19 @@ from typing import Optional
 import json
 from pathlib import Path
 import requests
-
+import os
+from dotenv import load_dotenv
 
 from shared.helper import (
     evaluate_expression,
     validate_expression,
     compare_results
 )
+
+# Cargar variables de entorno
+load_dotenv()
+
+TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET")
 
 app = FastAPI()
 
@@ -31,7 +37,7 @@ def load_challenges():
         return json.load(f)
 
 
-#MODELOS
+# MODELOS
 
 class SubmitRequest(BaseModel):
     expression: str
@@ -49,7 +55,7 @@ class LoginRequest(BaseModel):
     captcha: str
 
 
-#ENDPOINTS
+# ENDPOINTS
 
 @app.get("/")
 def root():
@@ -63,6 +69,7 @@ def get_challenges():
 
 @app.post("/api/challenges/{challenge_id}/submit")
 def submit_challenge(challenge_id: int, req: SubmitRequest):
+
     challenges = load_challenges()["challenges"]
 
     challenge = next(
@@ -72,19 +79,27 @@ def submit_challenge(challenge_id: int, req: SubmitRequest):
 
     if not challenge:
         return {
-            "success": False,
-            "message": "Challenge no encontrado"
+            "passed": False,
+            "expected": None,
+            "obtained": None
         }
+
+    # 🔹 pasamos todo el json al motor CEL
+    variables = challenge["json_input"]
 
     result = evaluate_expression(
         req.expression,
-        challenge["json_input"],
+        variables,
         "CEL",
         req.engine
     )
 
     if not result.get("success"):
-        return result
+        return {
+            "passed": False,
+            "expected": challenge.get("expected_result"),
+            "obtained": None
+        }
 
     obtained = result.get("result")
     expected = challenge.get("expected_result")
@@ -92,12 +107,9 @@ def submit_challenge(challenge_id: int, req: SubmitRequest):
     passed = compare_results(obtained, expected)
 
     return {
-        "success": True,
         "passed": passed,
         "expected": expected,
-        "obtained": obtained,
-        "challenge_id": challenge_id,
-        "challenge": challenge.get("title")
+        "obtained": obtained
     }
 
 
@@ -121,20 +133,7 @@ def validate(req: EvaluateRequest):
     )
 
 
-#LOGIN
-
-PASSWORD_PATH = Path(__file__).parent / "password.txt"
-
-
-def get_secret():
-    with open(PASSWORD_PATH, "r") as f:
-        for line in f:
-            if line.startswith("CLOUDFLARE_SECRET="):
-                return line.strip().split("=")[1]
-
-
-TURNSTILE_SECRET = get_secret()
-
+# LOGIN
 
 @app.post("/api/login")
 def login(req: LoginRequest):
