@@ -9,3 +9,9 @@ build/
 .DS_Store
 #Credenciales
 password.txt
+
+#python
+backend/__pycache__/
+__pycache__/
+*.pyc
+*.pyo
