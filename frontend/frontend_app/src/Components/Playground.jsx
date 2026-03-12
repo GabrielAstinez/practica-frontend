@@ -3,6 +3,7 @@ import JsonInput from "./JsonInput";
 import ExpressionInput from "./ExpressionInput";
 import Controls from "./Controls";
 import ResultBox from "./ResultBox";
+import { evaluateStarlark, compareResults, initStarlark } from "../starlarkWasm";
 
 function Playground({
   selectedChallenge,
@@ -13,6 +14,11 @@ function Playground({
   const [expression, setExpression] = useState("");
   const [result, setResult] = useState("");
   const [engine, setEngine] = useState("common");
+
+  // Preload the WASM binary in the background on mount
+  useEffect(() => {
+    initStarlark().catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (selectedChallenge) {
@@ -25,6 +31,34 @@ function Playground({
   const handleSubmit = async () => {
     if (!selectedChallenge) return;
 
+    // ── WebAssembly path: evaluate entirely in the browser ──────────────────
+    if (engine === "wasm") {
+      try {
+        const rawInput = selectedChallenge.json_input;
+        const context =
+          rawInput.data && typeof rawInput.data === "object"
+            ? rawInput.data
+            : rawInput;
+
+        const wasmResult = await evaluateStarlark(expression, context);
+        const obtained = wasmResult;
+        const expected = selectedChallenge.expected_result;
+        const passed = compareResults(obtained, expected);
+
+        setResult(
+          `Engine: wasm (browser)\n\nResult: ${JSON.stringify(obtained)}\n\nExpected: ${JSON.stringify(expected)}\n\nStatus: ${passed ? "Correct ✅" : "Incorrect ❌"}`
+        );
+
+        if (passed && !completedChallenges.includes(selectedChallenge.id)) {
+          setCompletedChallenges([...completedChallenges, selectedChallenge.id]);
+        }
+      } catch (err) {
+        setResult(`Error: ${err.message}`);
+      }
+      return;
+    }
+
+    // ── Backend path (CEL / Starlark server-side) ───────────────────────────
     const response = await fetch(
       `http://localhost:8000/api/challenges/${selectedChallenge.id}/submit`,
       {
