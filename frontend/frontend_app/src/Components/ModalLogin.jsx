@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-export default function ModalLogin({ isOpen, onClose }) {
+export default function ModalLogin({ isOpen, onLoginSuccess }) {
   const [captchaToken, setCaptchaToken] = useState(null);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -11,15 +11,22 @@ export default function ModalLogin({ isOpen, onClose }) {
   useEffect(() => {
     if (!isOpen) return;
 
-    if (window.turnstile && turnstileRef.current) {
-      window.turnstile.render(turnstileRef.current, {
-        sitekey: "0x4AAAAAACoX9knGJ8rJ8a5h",
-        callback: function (token) {
-          console.log("Captcha token:", token);
-          setCaptchaToken(token);
-        },
-      });
-    }
+    const interval = setInterval(() => {
+      if (window.turnstile && turnstileRef.current) {
+        turnstileRef.current.innerHTML = "";
+
+        window.turnstile.render(turnstileRef.current, {
+          sitekey: "0x4AAAAAACoX9knGJ8rJ8a5h",
+          callback: function (token) {
+            setCaptchaToken(token);
+          },
+        });
+
+        clearInterval(interval);
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -57,15 +64,15 @@ export default function ModalLogin({ isOpen, onClose }) {
       },
       body: JSON.stringify({
         captcha: captchaToken,
-        username: username,
-        email: email,
+        username,
+        email,
       }),
     });
 
     const data = await response.json();
 
     if (data.success) {
-      onClose();
+      onLoginSuccess();
     } else {
       alert("Captcha inválido");
     }
@@ -100,7 +107,6 @@ export default function ModalLogin({ isOpen, onClose }) {
         <div ref={turnstileRef}></div>
 
         <button onClick={handleLogin}>Entrar</button>
-        <button onClick={onClose}>Cerrar</button>
       </div>
     </div>
   );
