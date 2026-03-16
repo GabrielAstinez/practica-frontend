@@ -12,6 +12,7 @@
     "react-dom": "^19.2.4",
     "react-scripts": "5.0.1",
     "starlark-wasm": "^0.0.4",
+    "wasm-cel": "^0.5.2",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

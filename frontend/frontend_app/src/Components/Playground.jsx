@@ -4,6 +4,7 @@ import ExpressionInput from "./ExpressionInput";
 import Controls from "./Controls";
 import ResultBox from "./ResultBox";
 import { evaluateStarlark, compareResults, initStarlark } from "../starlarkWasm";
+import { evaluateCel, initCelWasm } from "../celWasm";
 
 function Playground({
   selectedChallenge,
@@ -15,9 +16,10 @@ function Playground({
   const [result, setResult] = useState(null);
   const [engine, setEngine] = useState("common");
 
-  // Preload the WASM binary in the background on mount
+  // Preload WASM binaries in the background on mount
   useEffect(() => {
     initStarlark().catch(() => {});
+    initCelWasm().catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -31,7 +33,33 @@ function Playground({
   const handleSubmit = async () => {
     if (!selectedChallenge) return;
 
-    // ── WebAssembly path: evaluate entirely in the browser ──────────────────
+    // ── CEL WebAssembly path ────────────────────────────────────────────────
+    if (engine === "cel-wasm") {
+      try {
+        const rawInput = selectedChallenge.json_input;
+        const context =
+          rawInput.data && typeof rawInput.data === "object"
+            ? rawInput.data
+            : rawInput;
+
+        const obtained = await evaluateCel(expression, context);
+        const expected = selectedChallenge.expected_result;
+        const passed = compareResults(obtained, expected);
+
+        setResult(
+          `Engine: cel-wasm (browser)\n\nResult: ${JSON.stringify(obtained)}\n\nExpected: ${JSON.stringify(expected)}\n\nStatus: ${passed ? "Correct ✅" : "Incorrect ❌"}`
+        );
+
+        if (passed && !completedChallenges.includes(selectedChallenge.id)) {
+          setCompletedChallenges([...completedChallenges, selectedChallenge.id]);
+        }
+      } catch (err) {
+        setResult(`Error: ${err.message}`);
+      }
+      return;
+    }
+
+    // ── Starlark WebAssembly path ─────────────────────────────────────────────
     if (engine === "wasm") {
       try {
         const rawInput = selectedChallenge.json_input;
@@ -101,8 +129,9 @@ function Playground({
         <select value={engine} onChange={(e) => setEngine(e.target.value)}>
           <option value="common">CEL (common)</option>
           <option value="pycel">CEL (pycel)</option>
-          <option value="wasm">WebAssembly</option>
-          <option value="starlark">Starlark</option>
+          <option value="cel-wasm">CEL (WebAssembly)</option>
+          <option value="wasm">Starlark (WebAssembly)</option>
+          <option value="starlark">Starlark (server)</option>
         </select>
       </div>
 
