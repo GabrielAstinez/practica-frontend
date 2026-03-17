@@ -5,6 +5,7 @@ import Controls from "./Controls";
 import ResultBox from "./ResultBox";
 import { evaluateStarlark, compareResults, initStarlark } from "../starlarkWasm";
 import { evaluateCel, initCelWasm } from "../celWasm";
+import { evaluateLua, compareLuaResults, initLua } from "../luaWasm";
 
 function Playground({
   selectedChallenge,
@@ -20,6 +21,7 @@ function Playground({
   useEffect(() => {
     initStarlark().catch(() => {});
     initCelWasm().catch(() => {});
+    initLua().catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -48,6 +50,32 @@ function Playground({
 
         setResult(
           `Engine: cel-wasm (browser)\n\nResult: ${JSON.stringify(obtained)}\n\nExpected: ${JSON.stringify(expected)}\n\nStatus: ${passed ? "Correct ✅" : "Incorrect ❌"}`
+        );
+
+        if (passed && !completedChallenges.includes(selectedChallenge.id)) {
+          setCompletedChallenges([...completedChallenges, selectedChallenge.id]);
+        }
+      } catch (err) {
+        setResult(`Error: ${err.message}`);
+      }
+      return;
+    }
+
+    // ── Lua WebAssembly path ──────────────────────────────────────────────────
+    if (engine === "lua") {
+      try {
+        const rawInput = selectedChallenge.json_input;
+        const context =
+          rawInput.data && typeof rawInput.data === "object"
+            ? rawInput.data
+            : rawInput;
+
+        const obtained = await evaluateLua(expression, context);
+        const expected = selectedChallenge.expected_result;
+        const passed = compareLuaResults(obtained, expected);
+
+        setResult(
+          `Engine: lua (browser)\n\nResult: ${JSON.stringify(obtained)}\n\nExpected: ${JSON.stringify(expected)}\n\nStatus: ${passed ? "Correct ✅" : "Incorrect ❌"}`
         );
 
         if (passed && !completedChallenges.includes(selectedChallenge.id)) {
@@ -129,9 +157,12 @@ function Playground({
         <select value={engine} onChange={(e) => setEngine(e.target.value)}>
           <option value="common">CEL (common)</option>
           <option value="pycel">CEL (pycel)</option>
+          <option value="cel-go">CEL (Go)</option>
           <option value="cel-wasm">CEL (WebAssembly)</option>
           <option value="wasm">Starlark (WebAssembly)</option>
           <option value="starlark">Starlark (server)</option>
+          <option value="lua-server">Lua (server)</option>
+          <option value="lua">Lua (WebAssembly)</option>
         </select>
       </div>
 

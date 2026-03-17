@@ -18,6 +18,8 @@
       "starlark_expression": "user[\"name\"]",
       "starlark_wasm_expression": "user[\"name\"]",
       "cel_wasm_expression": "user.name",
+      "lua_expression": "return user.name",
+      "cel_go_expression": "user.name",
       "expected_result": "Juan"
     },
     {
@@ -35,6 +37,8 @@
       "starlark_expression": "price > discount_price",
       "starlark_wasm_expression": "price > discount_price",
       "cel_wasm_expression": "price > discount_price",
+      "lua_expression": "price > discount_price",
+      "cel_go_expression": "price > discount_price",
       "expected_result": true
     },
     {
@@ -52,6 +56,8 @@
       "starlark_expression": "status == expected_status",
       "starlark_wasm_expression": "status == expected_status",
       "cel_wasm_expression": "status == expected_status",
+      "lua_expression": "status == expected_status",
+      "cel_go_expression": "status == expected_status",
       "expected_result": false
     },
     {
@@ -69,6 +75,8 @@
       "starlark_expression": "timestamp(subscription_end) > timestamp(current_date)",
       "starlark_wasm_expression": "subscription_end > current_date",
       "cel_wasm_expression": "timestamp(subscription_end) > timestamp(current_date)",
+      "lua_expression": "subscription_end > current_date",
+      "cel_go_expression": "timestamp(subscription_end) > timestamp(current_date)",
       "expected_result": true
     },
     {
@@ -86,6 +94,8 @@
       "starlark_expression": "temperature > threshold",
       "starlark_wasm_expression": "temperature > threshold",
       "cel_wasm_expression": "temperature > threshold",
+      "lua_expression": "temperature > threshold",
+      "cel_go_expression": "temperature > threshold",
       "expected_result": true
     },
     {
@@ -102,6 +112,8 @@
       "starlark_expression": "matches(email, r\"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$\")",
       "starlark_wasm_expression": "\"@\" in email and len(email.split(\"@\")) == 2 and \".\" in email.split(\"@\")[1]",
       "cel_wasm_expression": "email.matches(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$')",
+      "lua_expression": "return string.match(email, '^[%w%.%%%+%-]+@[%w%.%-]+%.[%a][%a]+$') ~= nil",
+      "cel_go_expression": "email.matches(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$')",
       "expected_result": true
     },
     {
@@ -118,6 +130,8 @@
       "starlark_expression": "type(value) == \"int\"",
       "starlark_wasm_expression": "type(value) == \"int\"",
       "cel_wasm_expression": "type(value) == int",
+      "lua_expression": "type(value) == 'number'",
+      "cel_go_expression": "type(value) == int",
       "expected_result": true
     },
     {
@@ -134,6 +148,8 @@
       "starlark_expression": "float(int(price * 100)) / 100.0",
       "starlark_wasm_expression": "float(int(price * 100)) / 100.0",
       "cel_wasm_expression": "double(int(price * 100.0)) / 100.0",
+      "lua_expression": "math.floor(price * 100) / 100",
+      "cel_go_expression": "double(int(price * 100.0)) / 100.0",
       "expected_result": 19.99
     },
     {
@@ -150,6 +166,8 @@
       "starlark_expression": "[n for n in numbers if n > 3]",
       "starlark_wasm_expression": "[n for n in numbers if n > 3]",
       "cel_wasm_expression": "numbers.filter(n, n > 3)",
+      "lua_expression": "local r = {}\nfor _, v in ipairs(numbers) do\n  if v > 3 then r[#r+1] = v end\nend\nreturn r",
+      "cel_go_expression": "numbers.filter(n, n > 3)",
       "expected_result": [4, 5]
     },
     {
@@ -166,6 +184,8 @@
       "starlark_expression": "\"Excelente\" if score >= 90 else (\"Bueno\" if score >= 70 else \"Regular\")",
       "starlark_wasm_expression": "\"Excelente\" if score >= 90 else (\"Bueno\" if score >= 70 else \"Regular\")",
       "cel_wasm_expression": "score >= 90 ? 'Excelente' : score >= 70 ? 'Bueno' : 'Regular'",
+      "lua_expression": "if score >= 90 then\n  return 'Excelente'\nelseif score >= 70 then\n  return 'Bueno'\nelse\n  return 'Regular'\nend",
+      "cel_go_expression": "score >= 90 ? 'Excelente' : score >= 70 ? 'Bueno' : 'Regular'",
       "expected_result": "Bueno"
     },
     {
@@ -186,6 +206,8 @@
       "starlark_expression": "user[\"role\"] == \"admin\" and user[\"active\"]",
       "starlark_wasm_expression": "user[\"role\"] == \"admin\" and user[\"active\"]",
       "cel_wasm_expression": "user.role == 'admin' && user.active",
+      "lua_expression": "return user.role == 'admin' and user.active == true",
+      "cel_go_expression": "user.role == 'admin' && user.active",
       "expected_result": true
     },
     {
@@ -202,6 +224,8 @@
       "starlark_expression": "float(sum(grades)) / float(len(grades)) if len(grades) > 0 else 0.0",
       "starlark_wasm_expression": "def main(grades=None, **_):\n    total = 0\n    for g in grades:\n        total += g\n    return float(total) / float(len(grades)) if len(grades) > 0 else 0.0",
       "cel_wasm_expression": "size(grades) > 0 ? double(sum(grades)) / double(size(grades)) : 0.0",
+      "lua_expression": "local total = 0\nfor _, v in ipairs(grades) do total = total + v end\nreturn #grades > 0 and total / #grades or 0.0",
+      "cel_go_expression": "size(grades) > 0 ? double(sum(grades)) / double(size(grades)) : 0.0",
       "expected_result": 86.6
     }
   ]

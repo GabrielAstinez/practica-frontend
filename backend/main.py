@@ -72,7 +72,12 @@ def submit_challenge(challenge_id: int, req: SubmitRequest):
 
     # 🔹 PASO 2: Identificamos el lenguaje real
     engine_name = req.engine.lower()
-    language = "STARLARK" if engine_name == "starlark" else "CEL"
+    if engine_name == "starlark":
+        language = "STARLARK"
+    elif engine_name == "lua-server":
+        language = "LUA"
+    else:
+        language = "CEL"
 
     # 🔹 PASO 3: Evaluamos
     result = evaluate_expression(

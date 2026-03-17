@@ -1,25 +1,28 @@
-# Playground de Evaluación de Expresiones CEL
+# Playground de Evaluación de Expresiones
 
-Aplicación web interactiva para aprender y evaluar expresiones CEL (Common Expression Language).
+Aplicación web interactiva para aprender y comparar expresiones en múltiples lenguajes de expresión: **CEL**, **Starlark** y **Lua**.
 
 ## 🎯 Características
 
-- ✅ Evaluación de expresiones CEL en backend (Python)
-- ✅ Validación de sintaxis CEL
+- ✅ 8 motores de evaluación (server-side y WebAssembly)
+- ✅ 12 desafíos de aprendizaje con expresiones en cada motor
 - ✅ API REST con FastAPI
-- ✅ 12 desafíos de aprendizaje documentados
-- ✅ Ejemplos prácticos incluidos
-- 🔄 Frontend React (en desarrollo)
-- 🔄 Soporte Starlark (próximamente)
+- ✅ Evaluación CEL nativa en Go (motor más compatible con el estándar)
+- ✅ Evaluación en el navegador sin backend (WebAssembly)
+- ✅ Soporte Starlark (servidor Python y WebAssembly)
+- ✅ Soporte Lua (servidor Python vía lupa y WebAssembly vía wasmoon)
 
 ## 📋 Requisitos
 
-- Python 3.13.12
-- Node.js 24.13.0
+| Herramienta | Versión mínima | Uso |
+|---|---|---|
+| Python | 3.13+ | Backend FastAPI |
+| Node.js | 18+ | Frontend React |
+| Go | 1.21+ | Compilar el binario CEL Go (una sola vez) |
 
 ## 🚀 Inicio Rápido
 
-### Backend (CEL API)
+### 1. Backend (API Python)
 
 ```bash
 cd backend
@@ -30,179 +33,146 @@ uvicorn main:app --reload
 Servidor disponible en: http://localhost:8000  
 Documentación API: http://localhost:8000/docs
 
-### Frontend (React)
+### 2. Compilar el motor CEL Go (una sola vez)
+
+El motor CEL Go requiere compilar el binario antes de iniciar el backend.
+Sólo es necesario hacerlo la primera vez o cuando se modifique `cel_go/main.go`.
+
+```bash
+cd backend/cel_go
+go mod tidy
+go build -o cel_evaluator.exe .   # Windows
+# go build -o cel_evaluator .     # Linux / macOS
+```
+
+### 3. Frontend (React)
 
 ```bash
 cd frontend/frontend_app
 npm install
-npm run dev
+npm start
 ```
 
 Aplicación disponible en: http://localhost:3000
 
+## 🔧 Motores de Evaluación
+
+| Motor (selector) | Lenguaje | Ejecución | Librería |
+|---|---|---|---|
+| `CEL (common)` | CEL | Servidor Python | `common-expression-language` |
+| `CEL (pycel)` | CEL | Servidor Python | `cel-python` |
+| `CEL (Go)` | CEL | Servidor Python → binario Go | `github.com/google/cel-go` |
+| `CEL (WebAssembly)` | CEL | Navegador (WASM) | `wasm-cel` |
+| `Starlark (server)` | Starlark | Servidor Python | `starlark-pyo3` |
+| `Starlark (WebAssembly)` | Starlark | Navegador (WASM) | `starlark-wasm` |
+| `Lua (server)` | Lua 5.4 | Servidor Python | `lupa` |
+| `Lua (WebAssembly)` | Lua 5.4 | Navegador (WASM) | `wasmoon` |
+
+> **Recomendación:** Para CEL estándar use `CEL (Go)` — implementa el spec completo con tipos estrictos, `timestamp()`, `matches()`, `filter()`, operador ternario y `sum()` personalizado.
+
 ## 📖 Uso
 
 1. Iniciar backend y frontend
-2. Abrir http://localhost:3000 en el navegador
-3. Ingresar JSON con datos
-4. Escribir expresión CEL
-5. Validar o evaluar
+2. Abrir http://localhost:3000
+3. Seleccionar un desafío de la lista
+4. Elegir el motor en el desplegable
+5. Escribir la expresión y hacer clic en **Submit**
 
-### Ejemplo Básico
+### Ejemplo: CEL
 
-**JSON Input:**
-```json
-{
-  "data": {
-    "a": 1,
-    "b": 2
-  }
-}
+```
+score >= 90 ? 'Excelente' : score >= 70 ? 'Bueno' : 'Regular'
 ```
 
-**Expresión CEL:**
-```
-a + b
-```
+### Ejemplo: Starlark
 
-**Resultado esperado:** `3`
-
-### Ejemplos Avanzados
-
-**Comparación de precios:**
-```json
-{
-  "data": {
-    "price": 100,
-    "discount_price": 80
-  }
-}
-```
-**Expresión:** `price > discount_price`  
-**Resultado:** `true`
-
-**Validación de email:**
-```json
-{
-  "data": {
-    "email": "usuario@example.com"
-  }
-}
-```
-**Expresión:** `email.matches(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$')`  
-**Resultado:** `true`
-
-**Operador ternario:**
-```json
-{
-  "data": {
-    "score": 85
-  }
-}
-```
-**Expresión:** `score >= 70 ? 'Aprobado' : 'Reprobado'`  
-**Resultado:** `"Aprobado"`
-
-## 📚 Documentación
-
-### Backend
-- [README del Backend](backend/README.md) - Documentación completa
-- [Inicio Rápido](backend/INICIO_RAPIDO.md) - Guía paso a paso
-- [Ejemplos CEL](backend/EJEMPLOS_CEL.md) - 8+ ejemplos detallados
-- [Notas de Implementación](backend/NOTAS_IMPLEMENTACION.md) - Limitaciones y recomendaciones
-- [Desafíos JSON](backend/challenges.json) - 12 desafíos programáticos
-
-### Frontend
-- [README del Frontend](frontend/frontend_app/README.md)
-
-## 🧪 Probar CEL
-
-Ejecutar script de pruebas incluido:
-
-```bash
-cd backend
-python test_cel.py
+```python
+"Excelente" if score >= 90 else ("Bueno" if score >= 70 else "Regular")
 ```
 
-Esto ejecuta todos los desafíos y muestra el porcentaje de éxito.
+### Ejemplo: Lua
+
+```lua
+if score >= 90 then
+  return 'Excelente'
+elseif score >= 70 then
+  return 'Bueno'
+else
+  return 'Regular'
+end
+```
 
 ## 🛠️ Tecnologías
 
 | Capa | Tecnología |
-|------|------------|
-| Backend | Python 3.13, FastAPI, cel-python |
-| Frontend | React 19, JavaScript |
-| Lenguaje | CEL (Common Expression Language) |
-| API | REST con JSON |
-
-## 📝 Desafíos Incluidos
-
-1. ✅ Filtrar valores de JSON
-2. ✅ Comparar valores numéricos
-3. ✅ Comparar strings
-4. ✅ Comparar fechas
-5. ✅ Operaciones con decimales
-6. ✅ Validar regex (email)
-7. ✅ Verificar tipos de datos
-8. ✅ Redondear números
-9. ⚠️ Filtrar listas (limitado)
-10. ✅ Operadores ternarios
-11. ⚠️ Objetos anidados (limitado)
-12. ⚠️ Agregaciones (en desarrollo)
-
-## ⚠️ Limitaciones Conocidas
-
-- Los objetos JSON anidados tienen soporte limitado
-- Algunas funciones CEL avanzadas no están disponibles
-- Ver [NOTAS_IMPLEMENTACION.md](backend/NOTAS_IMPLEMENTACION.md) para detalle completo
-
-## 🎓 Para el Desarrollador Junior
-
-Este proyecto es una **Prueba de Concepto (PoC)** diseñada para aprendizaje.
-
-### Objetivos de Aprendizaje
-- Implementar API REST con FastAPI
-- Integrar librería CEL en Python
-- Manejar validación y evaluación de expresiones
-- Documentar código y crear ejemplos
-- Testing y debugging
-
-### Próximos Pasos
-1. Revisar [INICIO_RAPIDO.md](backend/INICIO_RAPIDO.md)
-2. Ejecutar `python test_cel.py` para entender funcionamiento
-3. Probar API con ejemplos de [EJEMPLOS_CEL.md](backend/EJEMPLOS_CEL.md)
-4. Integrar con frontend React
-5. Implementar UI de desafíos
+|---|---|
+| Backend | Python 3.13+, FastAPI, uvicorn |
+| CEL nativo | Go 1.21+, cel-go v0.27 |
+| Frontend | React 19, JavaScript (CRA + CRACO) |
+| WASM CEL | wasm-cel 0.5.2 |
+| WASM Starlark | starlark-wasm 0.0.4 |
+| WASM Lua | wasmoon 1.16.0 |
 
 ## 📦 Estructura del Proyecto
 
 ```
 practica-frontend/
-├── README.md                    # Este archivo
+├── README.md
 ├── backend/
-│   ├── main.py                 # API FastAPI
-│   ├── requirements.txt        # Dependencias Python
-│   ├── test_cel.py            # Script de pruebas
-│   ├── challenges.json        # Desafíos
-│   ├── EJEMPLOS_CEL.md       # Ejemplos documentados
-│   ├── INICIO_RAPIDO.md      # Guía de inicio
+│   ├── main.py                  # API FastAPI (endpoints)
+│   ├── requirements.txt         # Dependencias Python
+│   ├── challenges.json          # 12 desafíos con expresiones por motor
+│   ├── cel_go/
+│   │   ├── main.go              # Evaluador CEL nativo en Go
+│   │   ├── go.mod
+│   │   └── cel_evaluator.exe    # Binario compilado (gitignored)
 │   └── shared/
-│       ├── helper.py          # Funciones auxiliares
-│       └── cel_engine.py      # Motor CEL
+│       ├── helper.py            # Router de motores
+│       ├── cel_common_engine.py # Motor common-expression-language
+│       ├── pycel_engine.py      # Motor cel-python
+│       ├── cel_go_engine.py     # Wrapper Python → binario Go
+│       ├── starlark_engine.py   # Motor starlark-pyo3
+│       └── lua_engine.py        # Motor lupa (Lua 5.4)
 └── frontend/
     └── frontend_app/
-        ├── src/
-        │   └── Components/     # Componentes React
-        └── package.json
-
+        ├── craco.config.js      # Webpack overrides (node fallbacks para WASM)
+        ├── package.json
+        └── src/
+            ├── starlarkWasm.js  # Cliente WASM Starlark
+            ├── celWasm.js       # Cliente WASM CEL
+            ├── luaWasm.js       # Cliente WASM Lua
+            └── Components/
+                ├── Playground.jsx
+                ├── ExpressionInput.jsx
+                └── ...
 ```
 
-## 🤝 Contribuir
+## 📝 Desafíos Incluidos
 
-Para agregar nuevos desafíos:
-1. Editar `backend/challenges.json`
-2. Actualizar `backend/EJEMPLOS_CEL.md`
-3. Ejecutar `python test_cel.py` para verificar
+| # | Título | Dificultad |
+|---|---|---|
+| 1 | Filtrar un valor desde JSON | Fácil |
+| 2 | Comparar dos valores numéricos | Fácil |
+| 3 | Comparar strings | Fácil |
+| 4 | Comparar fechas | Media |
+| 5 | Comparar números decimales | Fácil |
+| 6 | Validar patrón regex (email) | Media |
+| 7 | Verificar tipo de dato | Fácil |
+| 8 | Redondear a 2 decimales | Media |
+| 9 | Filtrar lista | Media |
+| 10 | Operador ternario / condicional | Media |
+| 11 | Múltiples condiciones | Media |
+| 12 | Calcular promedio | Difícil |
+
+Cada desafío incluye expresiones de ejemplo para los 8 motores.
+
+## 🧪 Pruebas
+
+```bash
+cd backend
+python test_cel.py         # CEL (pycel + common)
+python test_cel_common.py  # CEL common-expression-language
+```
 
 ## 📄 Licencia
 
