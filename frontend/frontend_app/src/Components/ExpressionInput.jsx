@@ -1,12 +1,20 @@
 function ExpressionInput({ value, onChange, engine }) {
-  const isMultiLine = engine === "starlark" || engine === "wasm";
+  const isMultiLine = engine === "starlark" || engine === "wasm" || engine === "lua" || engine === "lua-server";
+  const engineLabel = {
+    "starlark": "Starlark",
+    "wasm": "Starlark/WASM",
+    "cel-wasm": "CEL/WASM",
+    "lua": "Lua/WASM",
+    "cel-go": "CEL/Go",
+    "lua-server": "Lua/server",
+  }[engine];
   return (
     <div className="panel">
       <h4>
         Expression{" "}
-        {isMultiLine && (
+        {engineLabel && (
           <span style={{ fontWeight: "normal", fontSize: "0.85em", color: "#888" }}>
-            ({engine === "wasm" ? "Starlark/WASM" : "Starlark"})
+            ({engineLabel})
           </span>
         )}
       </h4>

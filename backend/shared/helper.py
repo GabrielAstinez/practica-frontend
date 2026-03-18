@@ -2,6 +2,8 @@ import json
 from shared.pycel_engine import pycel_engine
 from shared.cel_common_engine import cel_common_engine
 from shared.starlark_engine import starlark_engine
+from shared.cel_go_engine import cel_go_engine
+from shared.lua_engine import lua_engine
 
 
 def _normalize(value):
@@ -24,6 +26,9 @@ def evaluate_expression(expression: str, variables: dict, language: str = "CEL",
 
         elif engine.lower() == "common":
             result = cel_common_engine.evaluate(expression, variables)
+
+        elif engine.lower() == "cel-go":
+            result = cel_go_engine.evaluate(expression, variables)
 
         elif engine.lower() == "starlark":
             return {
@@ -51,6 +56,9 @@ def evaluate_expression(expression: str, variables: dict, language: str = "CEL",
     elif language.upper() == "STARLARK":
         result = starlark_engine.evaluate(expression, variables)
 
+    elif language.upper() == "LUA":
+        result = lua_engine.evaluate(expression, variables)
+
     else:
         return {
             "success": False,
@@ -73,6 +81,9 @@ def validate_expression(expression: str, variables: dict, language: str = "CEL",
 
         elif engine.lower() == "common":
             return cel_common_engine.validate(expression, variables)
+
+        elif engine.lower() == "cel-go":
+            return cel_go_engine.evaluate(expression, variables)
 
         elif engine.lower() == "starlark":
             return {
@@ -99,6 +110,9 @@ def validate_expression(expression: str, variables: dict, language: str = "CEL",
 
     elif language.upper() == "STARLARK":
         return starlark_engine.validate(expression, variables)
+
+    elif language.upper() == "LUA":
+        return lua_engine.validate(expression, variables)
 
     else:
         return {

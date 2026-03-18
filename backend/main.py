@@ -14,7 +14,6 @@ from shared.helper import (
     compare_results
 )
 
-# Cargar variables de entorno
 load_dotenv()
 
 TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET")
@@ -37,8 +36,6 @@ def load_challenges():
         return json.load(f)
 
 
-# MODELOS
-
 class SubmitRequest(BaseModel):
     expression: str
     engine: Optional[str] = "common"
@@ -54,8 +51,6 @@ class EvaluateRequest(BaseModel):
 class LoginRequest(BaseModel):
     captcha: str
 
-
-# ENDPOINTS
 
 @app.get("/")
 def root():
@@ -84,15 +79,22 @@ def submit_challenge(challenge_id: int, req: SubmitRequest):
             "obtained": None
         }
 
-    # 🔹 ENVOLVEMOS EL JSON EN data
     variables = {
         "data": challenge["json_input"]
     }
 
+    engine_name = req.engine.lower()
+    if engine_name == "starlark":
+        language = "STARLARK"
+    elif engine_name == "lua-server":
+        language = "LUA"
+    else:
+        language = "CEL"
+
     result = evaluate_expression(
         req.expression,
         variables,
-        "CEL",
+        language,
         req.engine
     )
 
@@ -144,8 +146,6 @@ def validate(req: EvaluateRequest):
         req.engine
     )
 
-
-# LOGIN
 
 @app.post("/api/login")
 def login(req: LoginRequest):
