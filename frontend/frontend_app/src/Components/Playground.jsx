@@ -22,7 +22,6 @@ function Playground({
   const [result, setResult] = useState(null);
   const [engine, setEngine] = useState("common");
 
-  // Preload WASM binaries in the background on mount
   useEffect(() => {
     initStarlark().catch(() => {});
     initCelWasm().catch(() => {});
@@ -40,22 +39,33 @@ function Playground({
   const handleSubmit = async () => {
     if (!selectedChallenge) return;
 
-    // ── CEL WebAssembly path ────────────────────────────────────────────────
+    if (!expression.trim()) {
+      setResult({
+        passed: false,
+        expected: selectedChallenge.expected_result,
+        obtained: null,
+        error: "Expresión vacía",
+      });
+      return;
+    }
+
+    // ── CEL WebAssembly ────────────────────────────────────────────────
     if (engine === "cel-wasm") {
       try {
         const rawInput = selectedChallenge.json_input;
-        const context =
-          rawInput.data && typeof rawInput.data === "object"
-            ? rawInput.data
-            : rawInput;
+        const context = {
+          data: rawInput,
+        };
 
         const obtained = await evaluateCel(expression, context);
         const expected = selectedChallenge.expected_result;
         const passed = compareResults(obtained, expected);
 
-        setResult(
-          `Engine: cel-wasm (browser)\n\nResult: ${JSON.stringify(obtained)}\n\nExpected: ${JSON.stringify(expected)}\n\nStatus: ${passed ? "Correct ✅" : "Incorrect ❌"}`,
-        );
+        setResult({
+          passed,
+          expected,
+          obtained,
+        });
 
         if (passed && !completedChallenges.includes(selectedChallenge.id)) {
           setCompletedChallenges([
@@ -64,12 +74,17 @@ function Playground({
           ]);
         }
       } catch (err) {
-        setResult(`Error: ${err.message}`);
+        setResult({
+          passed: false,
+          expected: selectedChallenge.expected_result,
+          obtained: null,
+          error: err.message,
+        });
       }
       return;
     }
 
-    // ── Lua WebAssembly path ──────────────────────────────────────────────────
+    // ── Lua WebAssembly ────────────────────────────────────────────────
     if (engine === "lua") {
       try {
         const rawInput = selectedChallenge.json_input;
@@ -82,40 +97,10 @@ function Playground({
         const expected = selectedChallenge.expected_result;
         const passed = compareLuaResults(obtained, expected);
 
-        setResult(
-          `Engine: lua (browser)\n\nResult: ${JSON.stringify(obtained)}\n\nExpected: ${JSON.stringify(expected)}\n\nStatus: ${passed ? "Correct ✅" : "Incorrect ❌"}`,
-        );
-
-        if (passed && !completedChallenges.includes(selectedChallenge.id)) {
-          setCompletedChallenges([
-            ...completedChallenges,
-            selectedChallenge.id,
-          ]);
-        }
-      } catch (err) {
-        setResult(`Error: ${err.message}`);
-      }
-      return;
-    }
-
-    // ── Starlark WebAssembly path ─────────────────────────────────────────────
-    if (engine === "wasm") {
-      try {
-        const rawInput = selectedChallenge.json_input;
-        const context =
-          rawInput.data && typeof rawInput.data === "object"
-            ? rawInput.data
-            : rawInput;
-
-        const wasmResult = await evaluateStarlark(expression, context);
-        const obtained = wasmResult;
-        const expected = selectedChallenge.expected_result;
-        const passed = compareResults(obtained, expected);
-
         setResult({
-          passed: passed,
-          expected: expected,
-          obtained: obtained,
+          passed,
+          expected,
+          obtained,
         });
 
         if (passed && !completedChallenges.includes(selectedChallenge.id)) {
@@ -125,12 +110,53 @@ function Playground({
           ]);
         }
       } catch (err) {
-        setResult(`Error: ${err.message}`);
+        setResult({
+          passed: false,
+          expected: selectedChallenge.expected_result,
+          obtained: null,
+          error: err.message,
+        });
       }
       return;
     }
 
-    // ── Backend path (CEL / Starlark server-side) ───────────────────────────
+    // ── Starlark WebAssembly ───────────────────────────────────────────
+    if (engine === "wasm") {
+      try {
+        const rawInput = selectedChallenge.json_input;
+        const context =
+          rawInput.data && typeof rawInput.data === "object"
+            ? rawInput.data
+            : rawInput;
+
+        const obtained = await evaluateStarlark(expression, context);
+        const expected = selectedChallenge.expected_result;
+        const passed = compareResults(obtained, expected);
+
+        setResult({
+          passed,
+          expected,
+          obtained,
+        });
+
+        if (passed && !completedChallenges.includes(selectedChallenge.id)) {
+          setCompletedChallenges([
+            ...completedChallenges,
+            selectedChallenge.id,
+          ]);
+        }
+      } catch (err) {
+        setResult({
+          passed: false,
+          expected: selectedChallenge.expected_result,
+          obtained: null,
+          error: err.message,
+        });
+      }
+      return;
+    }
+
+    // ── Backend ────────────────────────────────────────────────────────
     const response = await fetch(
       `http://localhost:8000/api/challenges/${selectedChallenge.id}/submit`,
       {
@@ -147,7 +173,6 @@ function Playground({
 
     const data = await response.json();
 
-    // ahora simplemente guardamos el resultado que devuelve el backend
     setResult(data);
 
     if (data.passed && !completedChallenges.includes(selectedChallenge.id)) {

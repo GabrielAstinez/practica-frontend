@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Playground from "./Playground";
 import Challenges from "./Challenges";
 import TaskDescriptions from "./TaskDescriptions";
@@ -10,15 +10,7 @@ function App() {
 
   const [isLogged, setIsLogged] = useState(false);
 
-  useEffect(() => {
-    const savedLogin = localStorage.getItem("logged");
-    if (savedLogin === "true") {
-      setIsLogged(true);
-    }
-  }, []);
-
   const handleLoginSuccess = () => {
-    localStorage.setItem("logged", "true");
     setIsLogged(true);
   };
 

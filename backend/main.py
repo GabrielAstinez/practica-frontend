@@ -14,6 +14,7 @@ from shared.helper import (
     compare_results
 )
 
+# 🔥 Cargar .env correctamente
 load_dotenv()
 
 TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET")
@@ -48,6 +49,7 @@ class EvaluateRequest(BaseModel):
     engine: Optional[str] = "common"
 
 
+# 🔥 SOLO captcha (username/email no se usan en backend)
 class LoginRequest(BaseModel):
     captcha: str
 
@@ -64,9 +66,7 @@ def get_challenges():
 
 @app.post("/api/challenges/{challenge_id}/submit")
 def submit_challenge(challenge_id: int, req: SubmitRequest):
-
     challenges = load_challenges()["challenges"]
-
     challenge = next(
         (c for c in challenges if c["id"] == challenge_id),
         None
@@ -107,7 +107,6 @@ def submit_challenge(challenge_id: int, req: SubmitRequest):
 
     obtained = result.get("result")
     expected = challenge.get("expected_result")
-
     passed = compare_results(obtained, expected)
 
     return {
@@ -119,11 +118,9 @@ def submit_challenge(challenge_id: int, req: SubmitRequest):
 
 @app.post("/api/evaluate")
 def evaluate(req: EvaluateRequest):
-
     variables = {
         "data": req.data
     }
-
     return evaluate_expression(
         req.expression,
         variables,
@@ -134,11 +131,9 @@ def evaluate(req: EvaluateRequest):
 
 @app.post("/api/validate")
 def validate(req: EvaluateRequest):
-
     variables = {
         "data": req.data
     }
-
     return validate_expression(
         req.expression,
         variables,
@@ -150,17 +145,30 @@ def validate(req: EvaluateRequest):
 @app.post("/api/login")
 def login(req: LoginRequest):
 
-    response = requests.post(
-        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-        data={
-            "secret": TURNSTILE_SECRET,
-            "response": req.captcha
-        }
-    )
+    print(f"DEBUG SECRET: '{TURNSTILE_SECRET}'")
 
-    result = response.json()
+    if not TURNSTILE_SECRET:
+        return {"success": False, "message": "No secret found"}
 
-    if not result.get("success"):
-        return {"success": False, "message": "Captcha inválido"}
+    try:
+        response = requests.post(
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+            data={
+                "secret": TURNSTILE_SECRET.strip(),
+                "response": req.captcha
+            },
+            timeout=10
+        )
 
-    return {"success": True}
+        result = response.json()
+        print(f"DEBUG RESULT: {result}")
+
+        if result.get("success"):
+            return {"success": True}
+        else:
+            error_code = result.get("error-codes", ["unknown"])[0]
+            return {"success": False, "message": error_code}
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return {"success": False, "message": "Connection error"}
