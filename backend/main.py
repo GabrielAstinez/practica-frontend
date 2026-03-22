@@ -14,7 +14,6 @@ from shared.helper import (
     compare_results
 )
 
-# 🔥 Cargar .env correctamente
 load_dotenv()
 
 TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET")
@@ -49,7 +48,6 @@ class EvaluateRequest(BaseModel):
     engine: Optional[str] = "common"
 
 
-# 🔥 SOLO captcha (username/email no se usan en backend)
 class LoginRequest(BaseModel):
     captcha: str
 

@@ -1,15 +1,11 @@
-function ChallengeItem({ challenge, completed, onClick }) {
+function ChallengeItem({ challenge, completed, onClick, isActive }) {
   return (
     <div
-      className="challenge"
+      className={`challenge ${isActive ? "active" : ""}`}
       onClick={() => onClick(challenge)}
-      style={{ cursor: "pointer", marginBottom: "8px" }}
     >
       <span>{completed ? "✅" : "⭕"}</span>
-      <span style={{ marginLeft: "8px" }}>{challenge.title}</span>
-      {completed && (
-        <span style={{ marginLeft: "8px", color: "green" }}>Completed</span>
-      )}
+      <span>{challenge.title}</span>
     </div>
   );
 }

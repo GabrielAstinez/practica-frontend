@@ -2,6 +2,7 @@
   "challenges": [
     {
       "id": 1,
+      "icon": "🔗",
       "title": "Filtrar un valor desde JSON",
       "description": "Acceder a un valor específico dentro de un objeto JSON",
       "difficulty": "easy",
