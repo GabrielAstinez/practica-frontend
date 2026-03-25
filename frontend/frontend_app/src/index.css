@@ -11,6 +11,7 @@ body.dark {
   color: #e5e7eb;
 }
 
+/* ── HEADER ─────────────────────────────────────────── */
 .header {
   display: flex;
   justify-content: space-between;
@@ -21,6 +22,7 @@ body.dark {
   border-bottom-left-radius: 20px;
   border-bottom-right-radius: 20px;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .header-title {
@@ -53,6 +55,7 @@ body.dark {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .theme-btn {
@@ -65,6 +68,50 @@ body.dark {
   font-size: 16px;
 }
 
+/* ── LANGUAGE COUNTERS ──────────────────────────────── */
+.lang-counters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.lang-counter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+}
+
+.lang-counter-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+
+.lang-counter-score {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* subtle color tints per language */
+.lang-counter.cel {
+  border-color: rgba(167, 139, 250, 0.6);
+}
+.lang-counter.starlark {
+  border-color: rgba(103, 232, 249, 0.6);
+}
+.lang-counter.lua {
+  border-color: rgba(110, 231, 183, 0.6);
+}
+
+/* ── ENGINE ROW ─────────────────────────────────────── */
 .engine-row {
   display: flex;
   align-items: center;
@@ -102,12 +149,14 @@ body.dark {
   white-space: nowrap;
 }
 
+/* ── LAYOUT ─────────────────────────────────────────── */
 .container {
   display: flex;
   gap: 20px;
   padding: 20px;
 }
 
+/* ── LEFT: CHALLENGES ───────────────────────────────── */
 .challenges {
   width: 260px;
   min-width: 260px;
@@ -136,6 +185,7 @@ body.dark .challenges h3 {
   color: #94a3b8;
 }
 
+/* ── CHALLENGE CARD ─────────────────────────────────── */
 .challenge {
   display: flex;
   align-items: center;
@@ -202,7 +252,6 @@ body.dark .challenge {
   margin-top: 2px;
   opacity: 0.6;
 }
-
 .challenge.active .challenge-diff {
   opacity: 0.75;
 }
@@ -226,7 +275,6 @@ body.dark .challenge {
   font-size: 15px;
   flex-shrink: 0;
 }
-
 .done-icon {
   color: #22c55e;
 }
@@ -237,6 +285,7 @@ body.dark .challenge {
   color: rgba(255, 255, 255, 0.4);
 }
 
+/* ── CENTER ─────────────────────────────────────────── */
 .main {
   flex: 1;
   background: #e5e7eb;
@@ -275,7 +324,6 @@ body.dark .main {
   color: #6b7280;
   margin: 0;
 }
-
 body.dark .playground-desc {
   color: #94a3b8;
 }
@@ -296,6 +344,7 @@ body.dark .playground-desc {
   white-space: nowrap;
 }
 
+/* ── EDITOR STACK ───────────────────────────────────── */
 .editor-stack {
   display: flex;
   flex-direction: column;
@@ -383,7 +432,7 @@ body.dark .engine-tag {
   cursor: not-allowed;
 }
 
-/* RESULT BOX */
+/* ── RESULT BOX ─────────────────────────────────────── */
 .result-box {
   margin-top: 4px;
   padding: 14px;
@@ -409,6 +458,7 @@ body.dark .result pre {
   color: #38bdf8;
 }
 
+/* ── RIGHT PANEL ────────────────────────────────────── */
 .task-descriptions {
   width: 280px;
   min-width: 280px;
@@ -417,6 +467,8 @@ body.dark .result pre {
   padding: 18px;
   border-radius: 15px;
   font-size: 14px;
+  overflow-y: auto;
+  max-height: calc(100vh - 100px);
 }
 
 .task-descriptions h3 {
@@ -464,6 +516,7 @@ body.dark .result pre {
   color: #334155;
 }
 
+/* ── MODAL ──────────────────────────────────────────── */
 .overlay {
   position: fixed;
   inset: 0;
@@ -508,7 +561,6 @@ body.dark .modal input {
   border-color: #334155;
   color: #e5e7eb;
 }
-
 .modal input:focus {
   border-color: #6366f1;
 }
@@ -541,6 +593,7 @@ body.dark .modal-error {
   cursor: not-allowed;
 }
 
+/* ── TRANSITIONS ────────────────────────────────────── */
 * {
   transition:
     background 0.3s ease,

@@ -9,8 +9,11 @@ const ENGINE_NAMES = {
   lua: "Lua (WASM)",
 };
 
-function TaskDescriptions({ selectedChallenge, completedByEngine }) {
-  // Which engines have solved this challenge?
+function TaskDescriptions({
+  selectedChallenge,
+  completedByEngine,
+  completedByLang,
+}) {
   const solvedIn = selectedChallenge
     ? Object.entries(completedByEngine)
         .filter(([, ids]) => ids.includes(selectedChallenge.id))
@@ -21,45 +24,61 @@ function TaskDescriptions({ selectedChallenge, completedByEngine }) {
     <div className="task-descriptions">
       <h3>Resultado</h3>
 
-      <div className="task-content">
-        {selectedChallenge ? (
-          <>
-            <h4>{selectedChallenge.title}</h4>
-            <p style={{ opacity: 0.7, fontSize: 13 }}>
-              {selectedChallenge.description}
-            </p>
+      {selectedChallenge ? (
+        <div className="task-content">
+          <h4>{selectedChallenge.title}</h4>
+          <p style={{ opacity: 0.7, fontSize: 13, marginTop: 4 }}>
+            {selectedChallenge.description}
+          </p>
 
-            <div className="result" style={{ marginTop: 12 }}>
-              <strong>Expected:</strong>
-              <pre>
-                {JSON.stringify(selectedChallenge.expected_result, null, 2)}
-              </pre>
-            </div>
+          <div className="result" style={{ marginTop: 12 }}>
+            <strong>Expected:</strong>
+            <pre>
+              {JSON.stringify(selectedChallenge.expected_result, null, 2)}
+            </pre>
+          </div>
 
-            {/* Per-engine completion for this challenge */}
-            <div className="engine-completions">
-              <h5>Solved with</h5>
-              {Object.entries(ENGINE_NAMES).map(([eng, label]) => {
-                const solved = solvedIn.includes(eng);
-                return (
-                  <div className="completion-row" key={eng}>
-                    <span>{label}</span>
-                    <span
-                      className={
-                        solved ? "completion-check" : "completion-pending"
-                      }
-                    >
-                      {solved ? "✔" : "○"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          <p>Selecciona un desafío</p>
-        )}
-      </div>
+          <div className="engine-completions" style={{ marginTop: 18 }}>
+            <h5>Resuelto con</h5>
+            {["CEL", "Starlark", "Lua"].map((lang) => {
+              const solved = completedByLang[lang]?.has(selectedChallenge.id);
+              return (
+                <div className="completion-row" key={lang}>
+                  <span style={{ fontWeight: 600 }}>{lang}</span>
+                  <span
+                    className={
+                      solved ? "completion-check" : "completion-pending"
+                    }
+                  >
+                    {solved ? "✔" : "○"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="engine-completions" style={{ marginTop: 14 }}>
+            <h5>Engine específico</h5>
+            {Object.entries(ENGINE_NAMES).map(([eng, label]) => {
+              const solved = solvedIn.includes(eng);
+              return (
+                <div className="completion-row" key={eng}>
+                  <span>{label}</span>
+                  <span
+                    className={
+                      solved ? "completion-check" : "completion-pending"
+                    }
+                  >
+                    {solved ? "✔" : "○"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <p>Selecciona un desafío</p>
+      )}
     </div>
   );
 }
