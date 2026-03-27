@@ -77,9 +77,7 @@ def submit_challenge(challenge_id: int, req: SubmitRequest):
             "obtained": None
         }
 
-    variables = {
-        "data": challenge["json_input"]
-    }
+    variables = challenge["json_input"]
 
     engine_name = req.engine.lower()
     if engine_name == "starlark":

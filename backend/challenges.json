@@ -19,7 +19,7 @@
       "starlark_expression": "user[\"name\"]",
       "starlark_wasm_expression": "user[\"name\"]",
       "cel_wasm_expression": "user.name",
-      "lua_expression": "return user.name",
+      "lua_expression": "user.name",
       "cel_go_expression": "user.name",
       "expected_result": "Juan"
     },

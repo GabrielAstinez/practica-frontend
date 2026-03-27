@@ -54,9 +54,12 @@ function Playground({
 
     try {
       if (engine === "cel-wasm") {
-        const obtained = await evaluateCel(expression, {
-          data: selectedChallenge.json_input,
-        });
+        const rawInput = selectedChallenge.json_input;
+        const context =
+          rawInput.data && typeof rawInput.data === "object"
+            ? rawInput.data
+            : rawInput;
+        const obtained = await evaluateCel(expression, context);
         const expected = selectedChallenge.expected_result;
         const passed = compareResults(obtained, expected);
         setResult({ passed, expected, obtained });

@@ -34,6 +34,11 @@ func main() {
 		return
 	}
 
+	// Unwrap "data" wrapper so expressions like `user.name` work directly
+	if data, ok := input.Context["data"].(map[string]interface{}); ok {
+		input.Context = data
+	}
+
 	env, err := buildEnv(input.Context)
 	if err != nil {
 		respond(Output{Success: false, Message: fmt.Sprintf("env error: %v", err)})
