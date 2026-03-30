@@ -47,7 +47,6 @@ function saveState(
         completedByLang: {
           CEL: [...completedByLang.CEL],
           Starlark: [...completedByLang.Starlark],
-          Lua: [...completedByLang.Lua],
         },
         engine,
         darkMode,
@@ -81,7 +80,6 @@ function App() {
   );
   const [engine, setEngine] = useState(initialEngine);
   const [darkMode, setDarkMode] = useState(initialDarkMode);
-
   const [savedAnswers, setSavedAnswers] = useState(initialSavedAnswers);
   const [executeInAll, setExecuteInAll] = useState(false);
 
@@ -124,25 +122,12 @@ function App() {
     }));
   };
 
-  const engineLabel =
-    {
-      common: "CEL · common",
-      pycel: "CEL · pycel",
-      "cel-go": "CEL · Go",
-      "cel-wasm": "CEL · WASM",
-      wasm: "Starlark · WASM",
-      starlark: "Starlark · server",
-      "lua-server": "Lua · server",
-      lua: "Lua · WASM",
-    }[engine] || engine;
-
   return (
     <div className="app">
       <ModalLogin
         isOpen={!isLoggedIn}
         onLoginSuccess={() => setIsLoggedIn(true)}
       />
-
       <div className="header">
         <div className="header-title">
           <span className="header-icon">⚡</span>
@@ -151,7 +136,6 @@ function App() {
             <span className="header-accent"> JSON</span>
           </div>
         </div>
-
         <div className="header-controls">
           <div className="engine-tabs">
             {Object.keys(ENGINE_LANGUAGE).map((e) => (
@@ -164,45 +148,38 @@ function App() {
               </button>
             ))}
           </div>
-
-          <div className="lang-counters">
-            {["CEL", "Starlark", "Lua"].map((l) => (
-              <div key={l} className={`lang-counter ${l.toLowerCase()}`}>
-                <span className="lang-counter-label">{l}</span>
-                <span className="lang-counter-score">
-                  {completedByLang[l].size}
-                </span>
-              </div>
-            ))}
-          </div>
-
           <button className="theme-btn" onClick={toggleTheme}>
             {darkMode ? "☀️" : "🌙"}
           </button>
         </div>
       </div>
-
       <div className="container">
         <Challenges
           onSelectChallenge={setSelectedChallenge}
           completedChallenges={completedByEngine[engine] || []}
           selectedChallenge={selectedChallenge}
         />
-
         <div className="main">
           <div className="execute-all">
-            <input
-              type="checkbox"
-              id="exec-all"
-              checked={executeInAll}
-              onChange={(e) => setExecuteInAll(e.target.checked)}
-            />
-            <label htmlFor="exec-all">Execute In All Engines</label>
-            <span className="engine-badge" style={{ marginLeft: "auto" }}>
-              {engineLabel}
+            <label className="execute-all-label" htmlFor="exec-all">
+              <span className="header-icon" style={{ fontSize: "18px" }}>
+                🚀
+              </span>
+              Multi-Engine Mode
+            </label>
+            <label className="switch">
+              <input
+                type="checkbox"
+                id="exec-all"
+                checked={executeInAll}
+                onChange={(e) => setExecuteInAll(e.target.checked)}
+              />
+              <span className="slider"></span>
+            </label>
+            <span className={`mode-status ${executeInAll ? "active" : ""}`}>
+              {executeInAll ? "Turbo: ON" : "Single"}
             </span>
           </div>
-
           <Playground
             selectedChallenge={selectedChallenge}
             completedChallenges={completedByEngine[engine] || []}
@@ -213,7 +190,6 @@ function App() {
             executeInAll={executeInAll}
           />
         </div>
-
         <TaskDescriptions
           selectedChallenge={selectedChallenge}
           completedByEngine={completedByEngine}

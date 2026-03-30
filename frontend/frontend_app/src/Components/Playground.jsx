@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ResultBox from "./ResultBox";
-
 import {
   evaluateStarlark,
   compareResults,
@@ -23,23 +22,34 @@ function Playground({
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Referencia para leer savedAnswers sin disparar el useEffect
+  const savedAnswersRef = useRef(savedAnswers);
+
+  // Mantener la referencia actualizada
+  useEffect(() => {
+    savedAnswersRef.current = savedAnswers;
+  }, [savedAnswers]);
+
   useEffect(() => {
     initStarlark().catch(() => {});
     initCelWasm().catch(() => {});
     initLua().catch(() => {});
   }, []);
 
-  // REQUERIMIENTO 4: Cargar respuesta guardada al cambiar de reto o motor
+  // Efecto corregido para evitar el parpadeo y eliminar el warning
   useEffect(() => {
     if (selectedChallenge) {
       setJsonText(JSON.stringify(selectedChallenge.json_input, null, 2));
-      const saved = savedAnswers[`${selectedChallenge.id}_${engine}`] || "";
+
+      const key = `${selectedChallenge.id}_${engine}`;
+      // Leemos de la Ref, así savedAnswers no es dependencia
+      const saved = savedAnswersRef.current[key] || "";
+
       setExpression(saved);
       setResult(null);
     }
-  }, [selectedChallenge, engine, savedAnswers]);
+  }, [selectedChallenge?.id, engine, selectedChallenge]);
 
-  // Función interna para evaluar en un motor específico
   const runEvaluation = async (targetEngine, expr) => {
     const rawInput = selectedChallenge.json_input;
     const context =
@@ -55,7 +65,6 @@ function Playground({
       );
       return { passed, expected: selectedChallenge.expected_result, obtained };
     }
-
     if (targetEngine === "lua") {
       const obtained = await evaluateLua(expr, context);
       const passed = compareLuaResults(
@@ -64,7 +73,6 @@ function Playground({
       );
       return { passed, expected: selectedChallenge.expected_result, obtained };
     }
-
     if (targetEngine === "wasm") {
       const obtained = await evaluateStarlark(expr, context);
       const passed = compareResults(
@@ -74,7 +82,6 @@ function Playground({
       return { passed, expected: selectedChallenge.expected_result, obtained };
     }
 
-    // Evaluación en Servidor
     const response = await fetch(
       `http://localhost:8000/api/challenges/${selectedChallenge.id}/submit`,
       {
@@ -88,11 +95,10 @@ function Playground({
 
   const handleSubmit = async () => {
     if (!selectedChallenge || !expression.trim()) return;
-
     setLoading(true);
+
     try {
       if (executeInAll) {
-        // REQUERIMIENTO 3: EJECUTAR EN TODOS
         const engines = [
           "common",
           "pycel",
@@ -103,28 +109,27 @@ function Playground({
           "lua-server",
           "lua",
         ];
-        let lastRes = null;
+        let currentRes = null;
 
         for (const e of engines) {
           try {
             const res = await runEvaluation(e, expression);
             if (res.passed) {
               onMarkCompleted(selectedChallenge.id, e);
-              onSaveAnswer(selectedChallenge.id, e, expression); // REQUERIMIENTO 4
+              onSaveAnswer(selectedChallenge.id, e, expression);
             }
-            if (e === engine) lastRes = res;
+            if (e === engine) currentRes = res;
           } catch (err) {
             console.error(`Error in engine ${e}:`, err);
           }
         }
-        setResult(lastRes || { error: "Execution finished" });
+        setResult(currentRes || { error: "Execution completed" });
       } else {
-        // Ejecución normal (un solo motor)
         const res = await runEvaluation(engine, expression);
         setResult(res);
         if (res.passed) {
           onMarkCompleted(selectedChallenge.id, engine);
-          onSaveAnswer(selectedChallenge.id, engine, expression); // REQUERIMIENTO 4
+          onSaveAnswer(selectedChallenge.id, engine, expression);
         }
       }
     } catch (err) {
@@ -145,7 +150,7 @@ function Playground({
             <span className="challenge-icon">
               {selectedChallenge.icon || "◈"}
             </span>
-            <div>
+            <div style={{ flex: 1 }}>
               <h2 className="playground-title">{selectedChallenge.title}</h2>
               <p className="playground-desc">{selectedChallenge.description}</p>
             </div>
@@ -160,27 +165,22 @@ function Playground({
         <div className="panel">
           <div className="panel-label">JSON Input</div>
           <textarea className="code-area" value={jsonText} readOnly rows={8} />
-
-          {/* REQUERIMIENTO 2: HINT AMPOLLETA */}
           <div className="hint">
             💡 <b>Hint:</b> All JSON inputs start with <code>data</code> as
-            root. The root needs to be omitted in the expression. Example:{" "}
-            <code>user.name</code> instead of <code>data.user.name</code>.
+            root. Omit root in expression. Example: <code>user.name</code>.
           </div>
         </div>
 
         <div className="panel">
           <div className="panel-label">
-            Expression
-            <span className="engine-tag">{engine}</span>
+            Expression <span className="engine-tag">{engine}</span>
           </div>
           <textarea
             className="code-area"
             value={expression}
             onChange={(e) => setExpression(e.target.value)}
-            rows={engine.includes("cel") ? 5 : 10}
+            rows={10}
             spellCheck={false}
-            placeholder="Write your expression here..."
           />
         </div>
       </div>
@@ -189,7 +189,7 @@ function Playground({
         <button
           className="submit-btn"
           onClick={handleSubmit}
-          disabled={!selectedChallenge || loading}
+          disabled={loading || !selectedChallenge}
         >
           {loading ? "Evaluating…" : executeInAll ? "SUBMIT TO ALL" : "SUBMIT"}
         </button>
