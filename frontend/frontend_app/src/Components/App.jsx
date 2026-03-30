@@ -16,13 +16,11 @@ const ENGINE_LANGUAGE = {
   lua: "Lua",
 };
 
-// ── localStorage helpers ──────────────────────────────
 function loadState() {
   try {
     const raw = localStorage.getItem("playground_state");
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    // Revive Sets for completedByLang
     parsed.completedByLang = {
       CEL: new Set(parsed.completedByLang?.CEL || []),
       Starlark: new Set(parsed.completedByLang?.Starlark || []),
@@ -34,13 +32,18 @@ function loadState() {
   }
 }
 
-function saveState(completedByEngine, completedByLang, engine, darkMode) {
+function saveState(
+  completedByEngine,
+  completedByLang,
+  engine,
+  darkMode,
+  savedAnswers,
+) {
   try {
     localStorage.setItem(
       "playground_state",
       JSON.stringify({
         completedByEngine,
-        // Sets aren't JSON-serializable, convert to arrays
         completedByLang: {
           CEL: [...completedByLang.CEL],
           Starlark: [...completedByLang.Starlark],
@@ -48,16 +51,13 @@ function saveState(completedByEngine, completedByLang, engine, darkMode) {
         },
         engine,
         darkMode,
+        savedAnswers,
       }),
     );
-  } catch {
-    // localStorage not available, silently ignore
-  }
+  } catch {}
 }
 
-// ── Initial state from localStorage or defaults ───────
 const saved = loadState();
-
 const initialCompletedByEngine = saved?.completedByEngine || {};
 const initialCompletedByLang = saved?.completedByLang || {
   CEL: new Set(),
@@ -66,15 +66,13 @@ const initialCompletedByLang = saved?.completedByLang || {
 };
 const initialEngine = saved?.engine || "common";
 const initialDarkMode = saved?.darkMode ?? false;
+const initialSavedAnswers = saved?.savedAnswers || {};
 
-// Apply dark mode immediately before first render
 if (initialDarkMode) document.body.classList.add("dark");
 
-// ─────────────────────────────────────────────────────
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // always false on reload = captcha required
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedChallenge, setSelectedChallenge] = useState(null);
-
   const [completedByEngine, setCompletedByEngine] = useState(
     initialCompletedByEngine,
   );
@@ -84,10 +82,18 @@ function App() {
   const [engine, setEngine] = useState(initialEngine);
   const [darkMode, setDarkMode] = useState(initialDarkMode);
 
-  // Persist whenever any tracked state changes
+  const [savedAnswers, setSavedAnswers] = useState(initialSavedAnswers);
+  const [executeInAll, setExecuteInAll] = useState(false);
+
   useEffect(() => {
-    saveState(completedByEngine, completedByLang, engine, darkMode);
-  }, [completedByEngine, completedByLang, engine, darkMode]);
+    saveState(
+      completedByEngine,
+      completedByLang,
+      engine,
+      darkMode,
+      savedAnswers,
+    );
+  }, [completedByEngine, completedByLang, engine, darkMode, savedAnswers]);
 
   const toggleTheme = () => {
     const next = !darkMode;
@@ -95,22 +101,27 @@ function App() {
     document.body.classList.toggle("dark", next);
   };
 
-  const engineCompletions = completedByEngine[engine] || [];
-
-  const handleMarkCompleted = (challengeId) => {
+  const handleMarkCompleted = (challengeId, targetEngine = engine) => {
     setCompletedByEngine((prev) => {
-      const existing = prev[engine] || [];
+      const existing = prev[targetEngine] || [];
       if (existing.includes(challengeId)) return prev;
-      return { ...prev, [engine]: [...existing, challengeId] };
+      return { ...prev, [targetEngine]: [...existing, challengeId] };
     });
 
-    const lang = ENGINE_LANGUAGE[engine];
+    const lang = ENGINE_LANGUAGE[targetEngine];
     setCompletedByLang((prev) => {
       if (prev[lang].has(challengeId)) return prev;
       const next = new Set(prev[lang]);
       next.add(challengeId);
       return { ...prev, [lang]: next };
     });
+  };
+
+  const handleSaveAnswer = (challengeId, engineKey, code) => {
+    setSavedAnswers((prev) => ({
+      ...prev,
+      [`${challengeId}_${engineKey}`]: code,
+    }));
   };
 
   const engineLabel =
@@ -132,7 +143,6 @@ function App() {
         onLoginSuccess={() => setIsLoggedIn(true)}
       />
 
-      {/* HEADER */}
       <div className="header">
         <div className="header-title">
           <span className="header-icon">⚡</span>
@@ -143,46 +153,27 @@ function App() {
         </div>
 
         <div className="header-controls">
-          {/* Language score counters */}
-          <div className="lang-counters">
-            <div className="lang-counter cel">
-              <span className="lang-counter-label">CEL</span>
-              <span className="lang-counter-score">
-                {completedByLang.CEL.size}
-              </span>
-            </div>
-            <div className="lang-counter starlark">
-              <span className="lang-counter-label">Starlark</span>
-              <span className="lang-counter-score">
-                {completedByLang.Starlark.size}
-              </span>
-            </div>
-            <div className="lang-counter lua">
-              <span className="lang-counter-label">Lua</span>
-              <span className="lang-counter-score">
-                {completedByLang.Lua.size}
-              </span>
-            </div>
+          <div className="engine-tabs">
+            {Object.keys(ENGINE_LANGUAGE).map((e) => (
+              <button
+                key={e}
+                className={`tab ${engine === e ? "active" : ""}`}
+                onClick={() => setEngine(e)}
+              >
+                {e.toUpperCase()}
+              </button>
+            ))}
           </div>
 
-          {/* Engine selector */}
-          <div className="engine-row">
-            <label className="engine-label">Engine</label>
-            <select
-              className="engine-select"
-              value={engine}
-              onChange={(e) => setEngine(e.target.value)}
-            >
-              <option value="common">CEL (common)</option>
-              <option value="pycel">CEL (pycel)</option>
-              <option value="cel-go">CEL (Go)</option>
-              <option value="cel-wasm">CEL (WebAssembly)</option>
-              <option value="wasm">Starlark (WebAssembly)</option>
-              <option value="starlark">Starlark (server)</option>
-              <option value="lua-server">Lua (server)</option>
-              <option value="lua">Lua (WebAssembly)</option>
-            </select>
-            <span className="engine-badge">{engineLabel}</span>
+          <div className="lang-counters">
+            {["CEL", "Starlark", "Lua"].map((l) => (
+              <div key={l} className={`lang-counter ${l.toLowerCase()}`}>
+                <span className="lang-counter-label">{l}</span>
+                <span className="lang-counter-score">
+                  {completedByLang[l].size}
+                </span>
+              </div>
+            ))}
           </div>
 
           <button className="theme-btn" onClick={toggleTheme}>
@@ -194,16 +185,32 @@ function App() {
       <div className="container">
         <Challenges
           onSelectChallenge={setSelectedChallenge}
-          completedChallenges={engineCompletions}
+          completedChallenges={completedByEngine[engine] || []}
           selectedChallenge={selectedChallenge}
         />
 
         <div className="main">
+          <div className="execute-all">
+            <input
+              type="checkbox"
+              id="exec-all"
+              checked={executeInAll}
+              onChange={(e) => setExecuteInAll(e.target.checked)}
+            />
+            <label htmlFor="exec-all">Execute In All Engines</label>
+            <span className="engine-badge" style={{ marginLeft: "auto" }}>
+              {engineLabel}
+            </span>
+          </div>
+
           <Playground
             selectedChallenge={selectedChallenge}
-            completedChallenges={engineCompletions}
+            completedChallenges={completedByEngine[engine] || []}
             onMarkCompleted={handleMarkCompleted}
+            onSaveAnswer={handleSaveAnswer}
+            savedAnswers={savedAnswers}
             engine={engine}
+            executeInAll={executeInAll}
           />
         </div>
 

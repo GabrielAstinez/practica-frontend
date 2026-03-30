@@ -13,7 +13,10 @@ function Playground({
   selectedChallenge,
   completedChallenges,
   onMarkCompleted,
+  onSaveAnswer,
+  savedAnswers,
   engine,
+  executeInAll,
 }) {
   const [jsonText, setJsonText] = useState("");
   const [expression, setExpression] = useState("");
@@ -26,94 +29,106 @@ function Playground({
     initLua().catch(() => {});
   }, []);
 
+  // REQUERIMIENTO 4: Cargar respuesta guardada al cambiar de reto o motor
   useEffect(() => {
     if (selectedChallenge) {
       setJsonText(JSON.stringify(selectedChallenge.json_input, null, 2));
-      setExpression("");
+      const saved = savedAnswers[`${selectedChallenge.id}_${engine}`] || "";
+      setExpression(saved);
       setResult(null);
     }
-  }, [selectedChallenge]);
+  }, [selectedChallenge, engine, savedAnswers]);
 
-  useEffect(() => {
-    setResult(null);
-  }, [engine]);
+  // Función interna para evaluar en un motor específico
+  const runEvaluation = async (targetEngine, expr) => {
+    const rawInput = selectedChallenge.json_input;
+    const context =
+      rawInput.data && typeof rawInput.data === "object"
+        ? rawInput.data
+        : rawInput;
 
-  const handleSubmit = async () => {
-    if (!selectedChallenge) return;
-    if (!expression.trim()) {
-      setResult({
-        passed: false,
-        expected: selectedChallenge.expected_result,
-        obtained: null,
-        error: "Expression is empty",
-      });
-      return;
+    if (targetEngine === "cel-wasm") {
+      const obtained = await evaluateCel(expr, context);
+      const passed = compareResults(
+        obtained,
+        selectedChallenge.expected_result,
+      );
+      return { passed, expected: selectedChallenge.expected_result, obtained };
     }
 
-    setLoading(true);
-
-    try {
-      if (engine === "cel-wasm") {
-        const rawInput = selectedChallenge.json_input;
-        const context =
-          rawInput.data && typeof rawInput.data === "object"
-            ? rawInput.data
-            : rawInput;
-        const obtained = await evaluateCel(expression, context);
-        const expected = selectedChallenge.expected_result;
-        const passed = compareResults(obtained, expected);
-        setResult({ passed, expected, obtained });
-        if (passed) onMarkCompleted(selectedChallenge.id);
-        return;
-      }
-
-      if (engine === "lua") {
-        const rawInput = selectedChallenge.json_input;
-        const context =
-          rawInput.data && typeof rawInput.data === "object"
-            ? rawInput.data
-            : rawInput;
-        const obtained = await evaluateLua(expression, context);
-        const expected = selectedChallenge.expected_result;
-        const passed = compareLuaResults(obtained, expected);
-        setResult({ passed, expected, obtained });
-        if (passed) onMarkCompleted(selectedChallenge.id);
-        return;
-      }
-
-      if (engine === "wasm") {
-        const rawInput = selectedChallenge.json_input;
-        const context =
-          rawInput.data && typeof rawInput.data === "object"
-            ? rawInput.data
-            : rawInput;
-        const obtained = await evaluateStarlark(expression, context);
-        const expected = selectedChallenge.expected_result;
-        const passed = compareResults(obtained, expected);
-        setResult({ passed, expected, obtained });
-        if (passed) onMarkCompleted(selectedChallenge.id);
-        return;
-      }
-
-      const response = await fetch(
-        `http://localhost:8000/api/challenges/${selectedChallenge.id}/submit`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ expression, engine }),
-        },
+    if (targetEngine === "lua") {
+      const obtained = await evaluateLua(expr, context);
+      const passed = compareLuaResults(
+        obtained,
+        selectedChallenge.expected_result,
       );
+      return { passed, expected: selectedChallenge.expected_result, obtained };
+    }
 
-      const data = await response.json();
-      setResult(data);
-      if (data.passed) onMarkCompleted(selectedChallenge.id);
+    if (targetEngine === "wasm") {
+      const obtained = await evaluateStarlark(expr, context);
+      const passed = compareResults(
+        obtained,
+        selectedChallenge.expected_result,
+      );
+      return { passed, expected: selectedChallenge.expected_result, obtained };
+    }
+
+    // Evaluación en Servidor
+    const response = await fetch(
+      `http://localhost:8000/api/challenges/${selectedChallenge.id}/submit`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expression: expr, engine: targetEngine }),
+      },
+    );
+    return await response.json();
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedChallenge || !expression.trim()) return;
+
+    setLoading(true);
+    try {
+      if (executeInAll) {
+        // REQUERIMIENTO 3: EJECUTAR EN TODOS
+        const engines = [
+          "common",
+          "pycel",
+          "cel-go",
+          "cel-wasm",
+          "wasm",
+          "starlark",
+          "lua-server",
+          "lua",
+        ];
+        let lastRes = null;
+
+        for (const e of engines) {
+          try {
+            const res = await runEvaluation(e, expression);
+            if (res.passed) {
+              onMarkCompleted(selectedChallenge.id, e);
+              onSaveAnswer(selectedChallenge.id, e, expression); // REQUERIMIENTO 4
+            }
+            if (e === engine) lastRes = res;
+          } catch (err) {
+            console.error(`Error in engine ${e}:`, err);
+          }
+        }
+        setResult(lastRes || { error: "Execution finished" });
+      } else {
+        // Ejecución normal (un solo motor)
+        const res = await runEvaluation(engine, expression);
+        setResult(res);
+        if (res.passed) {
+          onMarkCompleted(selectedChallenge.id, engine);
+          onSaveAnswer(selectedChallenge.id, engine, expression); // REQUERIMIENTO 4
+        }
+      }
     } catch (err) {
-      setResult({
-        passed: false,
-        expected: selectedChallenge.expected_result,
-        obtained: null,
-        error: err.message,
-      });
+      setResult({ passed: false, error: err.message });
     } finally {
       setLoading(false);
     }
@@ -121,14 +136,6 @@ function Playground({
 
   const isCompleted =
     selectedChallenge && completedChallenges.includes(selectedChallenge.id);
-
-  const expressionRows =
-    engine === "starlark" ||
-    engine === "wasm" ||
-    engine === "lua" ||
-    engine === "lua-server"
-      ? 10
-      : 5;
 
   return (
     <div className="playground">
@@ -152,13 +159,14 @@ function Playground({
       <div className="editor-stack">
         <div className="panel">
           <div className="panel-label">JSON Input</div>
-          <textarea
-            className="code-area"
-            value={jsonText}
-            onChange={(e) => setJsonText(e.target.value)}
-            rows={10}
-            spellCheck={false}
-          />
+          <textarea className="code-area" value={jsonText} readOnly rows={8} />
+
+          {/* REQUERIMIENTO 2: HINT AMPOLLETA */}
+          <div className="hint">
+            💡 <b>Hint:</b> All JSON inputs start with <code>data</code> as
+            root. The root needs to be omitted in the expression. Example:{" "}
+            <code>user.name</code> instead of <code>data.user.name</code>.
+          </div>
         </div>
 
         <div className="panel">
@@ -170,7 +178,7 @@ function Playground({
             className="code-area"
             value={expression}
             onChange={(e) => setExpression(e.target.value)}
-            rows={expressionRows}
+            rows={engine.includes("cel") ? 5 : 10}
             spellCheck={false}
             placeholder="Write your expression here..."
           />
@@ -179,11 +187,11 @@ function Playground({
 
       <div className="submit-row">
         <button
-          className={`submit-btn ${loading ? "loading" : ""}`}
+          className="submit-btn"
           onClick={handleSubmit}
           disabled={!selectedChallenge || loading}
         >
-          {loading ? "Evaluating…" : "SUBMIT"}
+          {loading ? "Evaluating…" : executeInAll ? "SUBMIT TO ALL" : "SUBMIT"}
         </button>
       </div>
 
